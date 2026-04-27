@@ -12,3 +12,4 @@ Other things of note:
  * Do not increase the stock QIDI webcam resolution - you will have issues with the CPU slowing down and the printer will panic. Keep the webcam at default resolution, or replace it with a better webcam that doesn't use so much compute.
  * There's a tweak to let the nozzle cool for a bit - this was added in as a fix when I had a gcode failure when starting a print immediately after one finished - if you start a print and the printer seems to be idle for a while, this is why. It'll let itself cool a bit before it scans the bed again.
  * There's an optional manual tramming gcode file, if you need it.
+ * I had to apply the patch to probe.py `wget -O /home/mks/klipper/klippy/extras/probe.py https://raw.githubusercontent.com/qidi-community/Plus4-Wiki/refs/heads/main/content/bed-scanning-probes/Beacon3D/RevH-Normal/probe.py`
