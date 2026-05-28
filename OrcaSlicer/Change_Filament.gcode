@@ -9,7 +9,7 @@ G1 Z15 F1200
 {else}
 G1 Z{max_layer_z + 3.0} F1200
 {endif}
-TOOL_CHANGE_START F=[current_extruder] T=[next_extruder]
+TOOL_CHANGE_START F=[previous_extruder] T=[next_extruder]
 DISABLE_ALL_SENSOR
 {if long_retractions_when_cut[previous_extruder]}
 MOVE_TO_TRASH
@@ -18,23 +18,23 @@ M400
 {else}
 G1 E-5 F{old_filament_e_feedrate}
 {endif}
-CUT_FILAMENT T=[current_extruder]
+CUT_FILAMENT T=[previous_extruder]
 MOVE_TO_TRASH
 M400
-{if nozzle_temperature_range_high[current_extruder] >= nozzle_temperature_range_high[next_extruder]}
-M104 S{nozzle_temperature_range_high[current_extruder]}
+{if nozzle_temperature_range_high[previous_extruder] >= nozzle_temperature_range_high[next_extruder]}
+M104 S{nozzle_temperature_range_high[previous_extruder]}
 {else}
 M104 S{nozzle_temperature_range_high[next_extruder]}
 {endif}
 M106 S0
 M106 P2 S0
-UNLOAD_T[current_extruder]
+UNLOAD_T[previous_extruder]
 G92 E0
 M83
 G1 E2 F50
 T[next_extruder]
-{if nozzle_temperature_range_high[current_extruder] >= nozzle_temperature_range_high[next_extruder]}
-SET_HEATER_TEMPERATURE HEATER=extruder TARGET={nozzle_temperature_range_high[current_extruder]} WAIT=1
+{if nozzle_temperature_range_high[previous_extruder] >= nozzle_temperature_range_high[next_extruder]}
+SET_HEATER_TEMPERATURE HEATER=extruder TARGET={nozzle_temperature_range_high[previous_extruder]} WAIT=1
 {else}
 SET_HEATER_TEMPERATURE HEATER=extruder TARGET={nozzle_temperature_range_high[next_extruder]} WAIT=1
 {endif}
