@@ -1,0 +1,62 @@
+
+[fila]
+enable                         = 1
+
+
+[target]
+extruder                       = 240
+heaterbed                      = 70
+hot                            = 45
+
+
+[babystep]
+value                          = 0.000
+adxl_offset                    = 0.15
+
+
+[oobe]
+enable                         = 0
+
+
+[mks_ethernet]
+enable                         = 1
+
+
+[app_connection]
+method                         = 1
+
+
+[app_server]
+name                           = aws
+
+
+[device_code]
+value                          = 80b885e5
+
+
+[device_state]
+state                          = standby_0.00
+
+
+[app]
+token                          = 
+username                       = 
+avatar                         = 
+
+
+[total]
+time                           = 58690
+
+
+[pops]
+pop_1                          = false
+
+
+[led]
+enable                         = 1
+
+
+[mks_file_picture_refresh]
+enable                         = 0
+
+
