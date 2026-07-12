@@ -1,12 +1,22 @@
 # qidi-plus4-configs
 Derived from stew675's Beacon config, merged with factory QIDI Box config.
 
-I'm running firmware v1.7.3, and a Beacon H v2.1.0.
+The repository contains firmware-specific configurations for v1.7.3 and
+v1.8.2, using a Beacon H v2.1.0.
 
 Also included are configs from my other QIDI Plus 4 that doesn't have a Box installed.
 
+## Configuration folders
+
+* `qidi-plus4-1.8.2-beacon-box-config` - firmware 1.8.2, Beacon and QIDI Box.
+* `qidi-plus4-1.8.2-beacon-config` - firmware 1.8.2, Beacon without a Box.
+* `qidi-plus4-1.8.2-base-config` - freshly extracted QIDI 1.8.2 factory
+  configuration, retained as a comparison/reference.
+* `qidi-plus4-1.7.3-beacon-box-config` - previous firmware 1.7.3 Box setup.
+* `qidi-plus4-1.7.3-beacon-config` - previous firmware 1.7.3 non-Box setup.
+
 Other things of note:
- * CPU Fan temp range is tweaked to make it less noisy. I upgraded my rear case fan to an 80mm whilst I was taking the back off the printer anyway.
+ * CPU Fan temp range is tweaked to make it less noisy. I upgraded my rear case fan to a 120mm whilst I was taking the back off the printer anyway.
  * Added Cold Unload macros if you need to force the QIDI Box to retract filaments (only do this if the filament has been cut from the hot-end).
  * `box_overrides.cfg` is included as a reference/optional helper for Fluidd slot load/unload buttons, but it is not enabled by default.
  * The Box and Beacon device IDs have to be updated if you use this. Search for "update for your machine" in `printer.cfg` and `box.cfg`
