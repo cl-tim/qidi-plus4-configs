@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "id": "qidi1",
+  "printerName": "QIDI Plus 4 - QIDI1",
+  "firmwareMode": "qidi-klipper-fork-1.8.2-with-qidi-box",
+  "klippeeAppliedVersion": 10,
+  "verifiedAt": "2026-08-06T14:31:38+10:00",
+  "managedFiles": [
+    "KAMP/Adaptive_Meshing.cfg",
+    "KAMP/Line_Purge.cfg",
+    "KAMP/Smart_Park.cfg",
+    "KAMP/Voron_Purge.cfg",
+    "KAMP_Settings.cfg",
+    "box.cfg",
+    "box1.cfg",
+    "box_overrides.cfg",
+    "cold_unload.cfg",
+    "gcode_macro.cfg",
+    "klippee-macros.cfg",
+    "manual_bed_tramming.cfg",
+    "plr.cfg",
+    "printer.cfg",
+    "time_update.cfg",
+    "timelapse.cfg"
+  ],
+  "devicePlaceholders": [
+    "CHANGE_ME_QIDI1_BEACON_SERIAL",
+    "CHANGE_ME_QIDI1_BOX_SERIAL"
+  ],
+  "volatilePrivateExclusions": [
+    ".klippee credentials, sync metadata and backups",
+    "actual Beacon and QIDI Box USB by-id paths",
+    "Klipper SAVE_CONFIG tails, Beacon models and bed meshes",
+    "saved_variables.cfg and other QIDI runtime state"
+  ]
+}
