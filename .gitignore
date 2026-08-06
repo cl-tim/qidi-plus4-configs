@@ -1,2 +1,12 @@
 *.log
 *.log.*
+
+# Klippee credentials, sync cursors and automatic backups are local state.
+.klippee/
+**/.klippee/
+
+# QIDI's saved-variable database contains per-printer runtime state.
+**/saved_variables.cfg
+
+__pycache__/
+*.py[cod]

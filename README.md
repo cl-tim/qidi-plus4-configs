@@ -1,29 +1,86 @@
 # qidi-plus4-configs
-Derived from stew675's Beacon config, merged with factory QIDI Box config.
 
-The repository contains firmware-specific configurations for v1.7.3 and
-v1.8.2, using a Beacon H v2.1.0.
+Reusable, sanitized example configurations for QIDI Plus 4 firmware and
+hardware setups, plus the historical material used to build and review them.
+Firmware images, static analysis, decompilation references and flashing research live in the separate
+[`qidi-plus4-firmware`](https://github.com/timo-quinn/qidi-plus4-firmware)
+repository.
 
-Also included are configs from my other QIDI Plus 4 that doesn't have a Box installed.
+## Deployable example profiles
 
-## Configuration folders
+The directories under `printers/` are setup-oriented examples. They are named
+for their firmware and hardware combination, not for individual printers:
 
-* `qidi-plus4-1.8.2-beacon-box-config` - firmware 1.8.2, Beacon and QIDI Box.
-* `qidi-plus4-1.8.2-beacon-config` - firmware 1.8.2, Beacon without a Box.
-* `qidi-plus4-1.8.2-base-config` - freshly extracted QIDI 1.8.2 factory
-  configuration, retained as a comparison/reference.
-* `qidi-plus4-1.7.3-beacon-box-config` - previous firmware 1.7.3 Box setup.
-* `qidi-plus4-1.7.3-beacon-config` - previous firmware 1.7.3 non-Box setup.
+| Profile | Firmware and hardware setup | Validated |
+| --- | --- | --- |
+| `printers/qidi-firmware-1.8.2-beacon-box` | QIDI Klipper fork 1.8.2, Beacon, one QIDI Box | 2026-08-06 |
+| `printers/mainline-klipper-beacon` | Mainline Klipper, Beacon, no QIDI Box | 2026-08-03 |
 
-Other things of note:
- * CPU Fan temp range is tweaked to make it less noisy. I upgraded my rear case fan to a 120mm whilst I was taking the back off the printer anyway.
- * Added Cold Unload macros if you need to force the QIDI Box to retract filaments (only do this if the filament has been cut from the hot-end).
- * `box_overrides.cfg` is included as a reference/optional helper for Fluidd slot load/unload buttons, but it is not enabled by default.
- * The Box and Beacon device IDs have to be updated if you use this. Search for "update for your machine" in `printer.cfg` and `box.cfg`
- * Do not increase the stock QIDI webcam resolution - you will have issues with the CPU slowing down and the printer will panic. Keep the webcam at default resolution, or replace it with a better webcam that doesn't use so much compute.
- * There's a tweak to let the nozzle cool for a bit - this was added in as a fix when I had a gcode failure when starting a print immediately after one finished - if you start a print and the printer seems to be idle for a while, this is why. It'll let itself cool a bit before it scans the bed again.
- * There's an optional manual tramming gcode file, if you need it.
- * I had to apply the patch to probe.py `wget -O /home/mks/klipper/klippy/extras/probe.py https://raw.githubusercontent.com/qidi-community/Plus4-Wiki/refs/heads/main/content/bed-scanning-probes/Beacon3D/RevH-Normal/probe.py`
- * I've increased purge amount to 200mm (`G1 E200 F300`) as the 80mm seemed to not be enough - too much of the previous filament was still in the nozzle.
- * KAMP Adaptive Meshing, Smart Park, and Voron Purge are wired into `PRINT_START`; make sure your slicer labels objects so `EXCLUDE_OBJECT_DEFINE` appears in the generated G-code.
- * OrcaSlicer printer G-code snippets are in `OrcaSlicer/`; the root files are for the Box profile and `OrcaSlicer/No_Box/` is for the non-Box profile.
+The examples were validated against commissioned Plus 4 installations, but
+they do not track those printers or their Klippee version history. Per-printer
+state belongs in Klippee and on the target printer. Klipper's volatile
+`SAVE_CONFIG` calibration data is deliberately not versioned here.
+
+Each example has a `profile.json` with its setup ID, exact managed-file set,
+firmware mode, validation timestamp, device placeholders and private-state
+exclusions. The mainline example's ten runtime `.cfg` files intentionally
+remain flat because the firmware renderer consumes that directory directly
+with `--profile-dir`.
+
+### QIDI firmware 1.8.2 + Beacon + QIDI Box
+
+This example uses QIDI firmware 1.8.2 and one QIDI Box. It keeps the
+working Box compatibility fixes, right-side Beacon workflow, PB4 5015 blower,
+KAMP adaptive mesh and purge, a 20% print-time carbon-filter floor and stable
+MZV shapers at 55.8 Hz X / 41.4 Hz Y. The configured motion ceilings are
+600 mm/s XY, 20,000 mm/s^2 XY, 20 mm/s Z and 500 mm/s^2 Z. Its normal chute
+cleaning purge remains 200 mm, followed by the 30 mm adaptive Voron prime.
+
+### Mainline Klipper + Beacon
+
+This example runs upstream Klipper on both UART MCUs. It has the same 600/20,000 and
+20/500 motion ceilings, measured `2hump_ei` 76.4 Hz X / `ei` 47.4 Hz Y
+shapers, an 80 mm chute clean plus 30 mm Voron prime, standalone cutter and
+filament handling, drying utilities, guarded chamber heat, mute mode and a
+20% print-time circulation floor. The high configured acceleration is a
+machine ceiling, not a general slicer recommendation; see its OrcaSlicer notes.
+
+## Repository layout
+
+- `printers/`: deployable examples organized by firmware and hardware setup;
+- `reference/`: sanitized, non-deployable QIDI 1.7.3, factory 1.8.2 and
+  superseded profile trees;
+- `OrcaSlicer/`: slicer G-code kept separate from Klippee runtime manifests;
+- `UPGRADE-1.8.2.md`: retained QIDI firmware comparison notes; and
+- `MODS.md`: physical modification notes.
+
+The old reference folders are intentionally not exact machine snapshots.
+Actual USB IDs and generated calibration tails were removed so they cannot be
+mistaken for portable configuration.
+
+## Klippee and private state
+
+`klippee-macros.cfg` is generated by `klippee install-moonraker`. It is tracked
+because each active `printer.cfg` includes it, but it must not be hand-edited.
+
+Klippee tokens, repository IDs, sync cursors, backups, diagnostics, local
+paths, `saved_variables.cfg`, real Beacon/Box by-id paths, Beacon models and
+bed meshes stay outside Git. Render `CHANGE_ME_*_SERIAL` for the intended
+target and preserve that printer's existing `SAVE_CONFIG` tail during apply.
+
+## Verification
+
+Run the repository-local guard after every Klippee refresh:
+
+```powershell
+python scripts/verify_profiles.py
+```
+
+It checks both manifests, exact `.cfg` file sets, all include targets, the
+mainline profile's flat layout, generated-macro markers, device placeholders
+and the absence of private Klippee state, real by-id paths and `SAVE_CONFIG`
+blocks.
+
+The existing OrcaSlicer snippets remain separated by Box and non-Box usage.
+Enable object labels so `EXCLUDE_OBJECT_DEFINE` is available to adaptive mesh,
+Smart Park and Voron purge macros.
