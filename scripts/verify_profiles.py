@@ -189,6 +189,54 @@ def validate_qidi1_plr_contract(profile_dir: Path, errors: list[str]) -> None:
             fail(errors, "qidi1: RESUME_INTERRUPTED must invoke POWER_LOSS_RESUME exactly once")
 
 
+def validate_qidi1_box_safety(profile_dir: Path, errors: list[str]) -> None:
+    box_path = profile_dir / "box.cfg"
+    box_sections = load_cfg_sections(box_path)
+    motion_section = "filament_motion_sensor box_motion_sensor"
+    if motion_section not in box_sections:
+        fail(errors, "qidi1: Box motion sensor section is missing")
+    else:
+        motion_lines = macro_lines(box_sections[motion_section])
+        if not any(re.fullmatch(r"use_irq\s*:\s*false", line, re.IGNORECASE) for line in motion_lines):
+            fail(errors, "qidi1: Box motion sensor must use the bounded polled path")
+        if any(re.match(r"debounce_us\s*:", line, re.IGNORECASE) for line in motion_lines):
+            fail(errors, "qidi1: IRQ-only Box debounce_us must not remain configured")
+
+    override_path = profile_dir / "box_overrides.cfg"
+    override_sections = load_cfg_sections(override_path)
+    required = {
+        "box_output_clock_guard",
+        "gcode_macro reload_all",
+        "gcode_macro qidi_box_auto_insert_enable",
+        "gcode_macro qidi_box_auto_insert_disable",
+    }
+    missing = sorted(required - override_sections.keys())
+    if missing:
+        fail(errors, f"qidi1: missing Box stability sections {missing}")
+        return
+
+    reload_all = override_sections["gcode_macro reload_all"]
+    reload_lines = macro_lines(reload_all)
+    required_fragments = (
+        "rename_existing: _QIDI_RELOAD_ALL",
+        "params.RFID|default(0)|int",
+        "qidi_box_auto_insert|default(0)|int",
+        "_QIDI_RELOAD_ALL {rawparams}",
+    )
+    for fragment in required_fragments:
+        if fragment not in reload_all:
+            fail(errors, f"qidi1: RELOAD_ALL safety wrapper is missing {fragment!r}")
+    if not any("automatic and not enabled" in line for line in reload_lines):
+        fail(errors, "qidi1: RELOAD_ALL must default automatic insertion to quarantined")
+
+    enable = override_sections["gcode_macro qidi_box_auto_insert_enable"]
+    disable = override_sections["gcode_macro qidi_box_auto_insert_disable"]
+    if "SAVE_VARIABLE VARIABLE=qidi_box_auto_insert VALUE=1" not in macro_lines(enable):
+        fail(errors, "qidi1: automatic Box insertion enable macro must persist its opt-in")
+    if "SAVE_VARIABLE VARIABLE=qidi_box_auto_insert VALUE=0" not in macro_lines(disable):
+        fail(errors, "qidi1: automatic Box insertion disable macro must persist its opt-out")
+
+
 def validate_profile(profile_dir: Path, errors: list[str]) -> None:
     metadata = load_metadata(profile_dir, errors)
     if not metadata:
@@ -257,6 +305,7 @@ def validate_profile(profile_dir: Path, errors: list[str]) -> None:
     if profile_dir.name == "qidi1":
         validate_qidi1_macro_safety(profile_dir, errors)
         validate_qidi1_plr_contract(profile_dir, errors)
+        validate_qidi1_box_safety(profile_dir, errors)
 
 
 def validate_repository_state(errors: list[str]) -> None:
