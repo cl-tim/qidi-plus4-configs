@@ -2,16 +2,17 @@
 
 These notes document the original merge of QIDI firmware 1.8.2 with the Beacon
 profiles. The old trees now live under `reference/` and are sanitized,
-non-deployable comparison material. `printers/qidi1` is the current QIDI-fork
-1.8.2 + Box profile. `printers/qidi2` has since migrated to mainline Klipper
-and is not an in-place QIDI 1.8.2 configuration.
+non-deployable comparison material. `printers/qidi-firmware-1.8.2-beacon-box`
+is the deployable QIDI-fork 1.8.2 + Box example. The separate
+`printers/mainline-klipper-beacon` example is not an in-place QIDI 1.8.2
+configuration.
 
 ## Before installing
 
 1. Back up the complete `~/printer_data/config` directory and the current
    `saved_variables.cfg` from each printer.
-2. Render the `CHANGE_ME_QIDI1_BEACON_SERIAL` and
-   `CHANGE_ME_QIDI1_BOX_SERIAL` placeholders for the intended QIDI1 target.
+2. Render the `CHANGE_ME_BEACON_SERIAL` and `CHANGE_ME_QIDI_BOX_SERIAL`
+   placeholders for the intended target.
 3. Never copy another printer's Beacon model, mesh, saved variables or USB
    identifiers.
 4. Install/reinstall the Beacon Klipper module and the Plus4 `probe.py` patch
@@ -21,8 +22,9 @@ and is not an in-place QIDI 1.8.2 configuration.
    current profiles.
 
 Generated `SAVE_CONFIG` tails have been removed from both current and reference
-trees. QIDI1's stable measured input-shaper values were promoted into its
-ordinary configuration; Beacon models and bed meshes remain target-local.
+trees. Stable measured input-shaper values from the commissioned source were
+promoted into the example configuration; Beacon models and bed meshes remain
+target-local.
 Re-run input shaping, Beacon calibration and bed meshing if the mechanics
 change. The Klippee apply workflow must preserve existing target calibration.
 

@@ -1,9 +1,8 @@
 {
   "schemaVersion": 1,
-  "id": "qidi1",
-  "printerName": "QIDI Plus 4 - QIDI1",
+  "id": "qidi-firmware-1.8.2-beacon-box",
+  "displayName": "QIDI Plus 4 - QIDI firmware 1.8.2, Beacon and QIDI Box",
   "firmwareMode": "qidi-klipper-fork-1.8.2-with-qidi-box",
-  "klippeeAppliedVersion": 10,
   "verifiedAt": "2026-08-06T14:31:38+10:00",
   "managedFiles": [
     "KAMP/Adaptive_Meshing.cfg",
@@ -24,8 +23,8 @@
     "timelapse.cfg"
   ],
   "devicePlaceholders": [
-    "CHANGE_ME_QIDI1_BEACON_SERIAL",
-    "CHANGE_ME_QIDI1_BOX_SERIAL"
+    "CHANGE_ME_BEACON_SERIAL",
+    "CHANGE_ME_QIDI_BOX_SERIAL"
   ],
   "volatilePrivateExclusions": [
     ".klippee credentials, sync metadata and backups",

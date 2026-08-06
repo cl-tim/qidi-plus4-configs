@@ -1,19 +1,18 @@
-# QIDI1: QIDI firmware 1.8.2, Beacon and QIDI Box
+# QIDI firmware 1.8.2, Beacon and QIDI Box
 
-This is the current deployable configuration for the printer named `qidi1`.
-It was refreshed from Klippee applied version 10 and verified against the
-printer on 2026-08-06 at 14:31 AEST. The stable configuration matched; only Klipper's
-per-printer `SAVE_CONFIG` calibration tail differed on the live machine.
+This is a deployable example for a QIDI Plus 4 running QIDI firmware 1.8.2
+with a Beacon and one QIDI Box. It was validated on a commissioned machine on
+2026-08-06. It does not track that printer's identity or Klippee history.
 
-QIDI1 runs QIDI's Klipper fork from firmware 1.8.2, a right-side Beacon Rev H,
+The example uses QIDI's Klipper fork from firmware 1.8.2, a right-side Beacon Rev H,
 one QIDI Box, a PB4-connected two-wire 5015 part-cooling blower, an 80 mm CPU
 fan and a 120 mm chamber circulation fan. It is not interchangeable with the
-mainline-Klipper QIDI2 profile.
+mainline-Klipper example.
 
 ## Managed configuration
 
 `profile.json` is the authoritative file manifest. Its 16 managed `.cfg`
-files are the exact stable set synced by Klippee. `printer.cfg` includes the
+files form the portable example set. `printer.cfg` includes the
 QIDI power-loss, Box, KAMP, timelapse, maintenance and Klippee integration
 files; only `box1.cfg` is present because this printer has one physical Box.
 
@@ -38,8 +37,8 @@ an adaptive mesh, then lays down a separate 30 mm KAMP Voron prime.
 
 ## Private and volatile state
 
-Before rendering, replace `CHANGE_ME_QIDI1_BEACON_SERIAL` and
-`CHANGE_ME_QIDI1_BOX_SERIAL` with this printer's exact `/dev/serial/by-id`
+Before rendering, replace `CHANGE_ME_BEACON_SERIAL` and
+`CHANGE_ME_QIDI_BOX_SERIAL` with the target printer's exact `/dev/serial/by-id`
 paths. Klippee target rendering should perform that substitution.
 
 The repository deliberately excludes `.klippee`, `saved_variables.cfg`,

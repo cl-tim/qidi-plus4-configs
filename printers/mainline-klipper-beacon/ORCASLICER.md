@@ -74,5 +74,5 @@ Override them only when a material or print warrants it, for example:
 PRINT_START BED=110 HOTEND=260 CHAMBER=55 MESH=adaptive SOAK=120 MESH_MARGIN=8
 ```
 
-Firmware retraction is enabled in the current QIDI2 Orca printer profile and
+Firmware retraction is enabled in the source Orca printer profile and
 uses the commissioned 0.8 mm at 30 mm/s retract/unretract settings.

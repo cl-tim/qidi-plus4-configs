@@ -1,9 +1,8 @@
 {
   "schemaVersion": 1,
-  "id": "qidi2",
-  "printerName": "QIDI Plus 4 - QIDI2",
+  "id": "mainline-klipper-beacon",
+  "displayName": "QIDI Plus 4 - mainline Klipper with Beacon",
   "firmwareMode": "mainline-klipper-with-beacon-no-qidi-box",
-  "klippeeAppliedVersion": 14,
   "verifiedAt": "2026-08-03T09:22:32+10:00",
   "managedFiles": [
     "beacon.cfg",

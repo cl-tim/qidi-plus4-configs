@@ -6,10 +6,9 @@ mount, a PB4 white-port 5015 nozzle-cooling modification, and no QIDI Box. The
 pin map and operating macros come from the commissioned profile in the
 companion `qidi-plus4-firmware` repository.
 
-This directory is the current sanitized QIDI2 profile. It was refreshed from
-Klippee applied version 14 and verified against the printer on 2026-08-03 at 09:22 AEST.
-Stable files matched; only the printer-local Beacon `SAVE_CONFIG` model had
-drifted. `profile.json` records the exact ten-file runtime manifest.
+This directory is a sanitized, deployable example validated on a commissioned
+machine on 2026-08-03. It does not track that printer's identity or Klippee
+history. `profile.json` records the exact ten-file runtime manifest.
 
 It contains:
 

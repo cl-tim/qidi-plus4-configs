@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the sanitized, Klippee-backed printer profiles."""
+"""Validate the sanitized, setup-oriented printer examples."""
 
 from __future__ import annotations
 
@@ -18,11 +18,13 @@ BY_ID_RE = re.compile(r"/dev/serial/by-id/")
 TOKEN_RE = re.compile("klp_" + r"[A-Za-z0-9_-]{20,}")
 WINDOWS_USER_PATH_RE = re.compile(r"[A-Za-z]:\\Users\\", re.IGNORECASE)
 CFG_SECTION_RE = re.compile(r"^\s*\[([^]]+)]\s*(?:#.*)?$")
-EXPECTED_MANAGED_COUNTS = {"qidi1": 16, "qidi2": 10}
+QIDI_FIRMWARE_PROFILE = "qidi-firmware-1.8.2-beacon-box"
+MAINLINE_PROFILE = "mainline-klipper-beacon"
+EXPECTED_MANAGED_COUNTS = {QIDI_FIRMWARE_PROFILE: 16, MAINLINE_PROFILE: 10}
 EXPECTED_DEVICE_PLACEHOLDERS = {
-    "qidi1": {"CHANGE_ME_QIDI1_BEACON_SERIAL", "CHANGE_ME_QIDI1_BOX_SERIAL"},
+    QIDI_FIRMWARE_PROFILE: {"CHANGE_ME_BEACON_SERIAL", "CHANGE_ME_QIDI_BOX_SERIAL"},
     # The firmware repository's render-config command consumes this exact token.
-    "qidi2": {"CHANGE_ME_BEACON_SERIAL"},
+    MAINLINE_PROFILE: {"CHANGE_ME_BEACON_SERIAL"},
 }
 
 
@@ -41,9 +43,8 @@ def load_metadata(profile_dir: Path, errors: list[str]) -> dict[str, object]:
     required = {
         "schemaVersion",
         "id",
-        "printerName",
+        "displayName",
         "firmwareMode",
-        "klippeeAppliedVersion",
         "verifiedAt",
         "managedFiles",
         "devicePlaceholders",
@@ -54,8 +55,6 @@ def load_metadata(profile_dir: Path, errors: list[str]) -> dict[str, object]:
         fail(errors, f"{path.relative_to(REPO_ROOT)}: missing keys {missing}")
     if data.get("id") != profile_dir.name:
         fail(errors, f"{path.relative_to(REPO_ROOT)}: id must equal {profile_dir.name!r}")
-    if not isinstance(data.get("klippeeAppliedVersion"), int):
-        fail(errors, f"{path.relative_to(REPO_ROOT)}: klippeeAppliedVersion must be an integer")
     try:
         datetime.fromisoformat(str(data.get("verifiedAt")))
     except ValueError:
@@ -100,7 +99,7 @@ def macro_lines(body: str) -> list[str]:
     ]
 
 
-def validate_qidi1_macro_safety(profile_dir: Path, errors: list[str]) -> None:
+def validate_qidi_firmware_macro_safety(profile_dir: Path, errors: list[str]) -> None:
     path = profile_dir / "gcode_macro.cfg"
     sections = load_cfg_sections(path)
     required = {
@@ -112,7 +111,7 @@ def validate_qidi1_macro_safety(profile_dir: Path, errors: list[str]) -> None:
     }
     missing = sorted(required - sections.keys())
     if missing:
-        fail(errors, f"qidi1: missing safety macros {missing}")
+        fail(errors, f"{profile_dir.name}: missing safety macros {missing}")
         return
 
     chute = sections["gcode_macro _move_to_chute"]
@@ -121,42 +120,42 @@ def validate_qidi1_macro_safety(profile_dir: Path, errors: list[str]) -> None:
         home_index = chute_lines.index("_CG28")
         move_index = chute_lines.index("_MOVE_TO_CHUTE_HOMED")
     except ValueError:
-        fail(errors, "qidi1: _MOVE_TO_CHUTE must home, then call _MOVE_TO_CHUTE_HOMED")
+        fail(errors, f"{profile_dir.name}: _MOVE_TO_CHUTE must home, then call _MOVE_TO_CHUTE_HOMED")
     else:
         if move_index <= home_index:
-            fail(errors, "qidi1: _MOVE_TO_CHUTE_HOMED must run after _CG28")
+            fail(errors, f"{profile_dir.name}: _MOVE_TO_CHUTE_HOMED must run after _CG28")
     if "printer.gcode_move.position" in chute:
-        fail(errors, "qidi1: _MOVE_TO_CHUTE must not evaluate position before homing")
+        fail(errors, f"{profile_dir.name}: _MOVE_TO_CHUTE must not evaluate position before homing")
 
     homed_chute = sections["gcode_macro _move_to_chute_homed"]
     if "printer.gcode_move.position.x" not in homed_chute or "printer.gcode_move.position.y" not in homed_chute:
-        fail(errors, "qidi1: _MOVE_TO_CHUTE_HOMED must evaluate the post-home X/Y position")
+        fail(errors, f"{profile_dir.name}: _MOVE_TO_CHUTE_HOMED must evaluate the post-home X/Y position")
 
     plr_lines = macro_lines(sections["gcode_macro clear_nozzle_plr"])
     if not plr_lines or plr_lines[-1].upper() != "M400":
-        fail(errors, "qidi1: CLEAR_NOZZLE_PLR must end with M400")
+        fail(errors, f"{profile_dir.name}: CLEAR_NOZZLE_PLR must end with M400")
 
     resume = sections["gcode_macro resume_print"]
     if "_MOVE_TO_CHUTE" not in macro_lines(resume):
-        fail(errors, "qidi1: RESUME_PRINT must use the guarded _MOVE_TO_CHUTE route")
+        fail(errors, f"{profile_dir.name}: RESUME_PRINT must use the guarded _MOVE_TO_CHUTE route")
     if re.search(r"(?im)^\s*G[01]\s+X95\b[^\n]*\n\s*G[01]\s+Y324\b", resume):
-        fail(errors, "qidi1: RESUME_PRINT contains an unsafe direct purge-chute approach")
+        fail(errors, f"{profile_dir.name}: RESUME_PRINT contains an unsafe direct purge-chute approach")
 
     m107 = sections["gcode_macro m107"]
     if not re.search(r"params\.P\|default\(0\)\|int", m107):
-        fail(errors, "qidi1: M107 must default to QIDI fan port P0")
+        fail(errors, f"{profile_dir.name}: M107 must default to QIDI fan port P0")
     if "M106 P{p} S0" not in macro_lines(m107):
-        fail(errors, "qidi1: M107 must route P0/P2/P3 shutdown through M106")
+        fail(errors, f"{profile_dir.name}: M107 must route P0/P2/P3 shutdown through M106")
 
 
-def validate_qidi1_plr_contract(profile_dir: Path, errors: list[str]) -> None:
+def validate_qidi_firmware_plr_contract(profile_dir: Path, errors: list[str]) -> None:
     path = profile_dir / "plr.cfg"
     sections = load_cfg_sections(path)
     power_section = "gcode_shell_command power_loss_resume"
     resume_section = "gcode_macro resume_interrupted"
 
     if power_section not in sections:
-        fail(errors, "qidi1: POWER_LOSS_RESUME shell command is missing")
+        fail(errors, f"{profile_dir.name}: POWER_LOSS_RESUME shell command is missing")
     else:
         power_options = [
             line
@@ -170,37 +169,37 @@ def validate_qidi1_plr_contract(profile_dir: Path, errors: list[str]) -> None:
         if power_options != expected_options:
             fail(
                 errors,
-                "qidi1: POWER_LOSS_RESUME must run /home/mks/scripts/plr/plr.sh "
+                f"{profile_dir.name}: POWER_LOSS_RESUME must run /home/mks/scripts/plr/plr.sh "
                 "with timeout 120",
             )
 
     if "gcode_shell_command update_gcode_lines" in sections:
-        fail(errors, "qidi1: obsolete UPDATE_GCODE_LINES shell command is still configured")
+        fail(errors, f"{profile_dir.name}: obsolete UPDATE_GCODE_LINES shell command is still configured")
 
     active_lines = macro_lines(path.read_text(encoding="utf-8"))
     if any("update_gcode_lines" in line.lower() for line in active_lines):
-        fail(errors, "qidi1: obsolete UPDATE_GCODE_LINES reference is still active")
+        fail(errors, f"{profile_dir.name}: obsolete UPDATE_GCODE_LINES reference is still active")
 
     if resume_section not in sections:
-        fail(errors, "qidi1: RESUME_INTERRUPTED macro is missing")
+        fail(errors, f"{profile_dir.name}: RESUME_INTERRUPTED macro is missing")
     else:
         resume_lines = macro_lines(sections[resume_section])
         if resume_lines.count("RUN_SHELL_COMMAND CMD=POWER_LOSS_RESUME") != 1:
-            fail(errors, "qidi1: RESUME_INTERRUPTED must invoke POWER_LOSS_RESUME exactly once")
+            fail(errors, f"{profile_dir.name}: RESUME_INTERRUPTED must invoke POWER_LOSS_RESUME exactly once")
 
 
-def validate_qidi1_box_safety(profile_dir: Path, errors: list[str]) -> None:
+def validate_qidi_firmware_box_safety(profile_dir: Path, errors: list[str]) -> None:
     box_path = profile_dir / "box.cfg"
     box_sections = load_cfg_sections(box_path)
     motion_section = "filament_motion_sensor box_motion_sensor"
     if motion_section not in box_sections:
-        fail(errors, "qidi1: Box motion sensor section is missing")
+        fail(errors, f"{profile_dir.name}: Box motion sensor section is missing")
     else:
         motion_lines = macro_lines(box_sections[motion_section])
         if not any(re.fullmatch(r"use_irq\s*:\s*false", line, re.IGNORECASE) for line in motion_lines):
-            fail(errors, "qidi1: Box motion sensor must use the bounded polled path")
+            fail(errors, f"{profile_dir.name}: Box motion sensor must use the bounded polled path")
         if any(re.match(r"debounce_us\s*:", line, re.IGNORECASE) for line in motion_lines):
-            fail(errors, "qidi1: IRQ-only Box debounce_us must not remain configured")
+            fail(errors, f"{profile_dir.name}: IRQ-only Box debounce_us must not remain configured")
 
     override_path = profile_dir / "box_overrides.cfg"
     override_sections = load_cfg_sections(override_path)
@@ -212,7 +211,7 @@ def validate_qidi1_box_safety(profile_dir: Path, errors: list[str]) -> None:
     }
     missing = sorted(required - override_sections.keys())
     if missing:
-        fail(errors, f"qidi1: missing Box stability sections {missing}")
+        fail(errors, f"{profile_dir.name}: missing Box stability sections {missing}")
         return
 
     reload_all = override_sections["gcode_macro reload_all"]
@@ -225,16 +224,16 @@ def validate_qidi1_box_safety(profile_dir: Path, errors: list[str]) -> None:
     )
     for fragment in required_fragments:
         if fragment not in reload_all:
-            fail(errors, f"qidi1: RELOAD_ALL safety wrapper is missing {fragment!r}")
+            fail(errors, f"{profile_dir.name}: RELOAD_ALL safety wrapper is missing {fragment!r}")
     if not any("automatic and not enabled" in line for line in reload_lines):
-        fail(errors, "qidi1: RELOAD_ALL must default automatic insertion to quarantined")
+        fail(errors, f"{profile_dir.name}: RELOAD_ALL must default automatic insertion to quarantined")
 
     enable = override_sections["gcode_macro qidi_box_auto_insert_enable"]
     disable = override_sections["gcode_macro qidi_box_auto_insert_disable"]
     if "SAVE_VARIABLE VARIABLE=qidi_box_auto_insert VALUE=1" not in macro_lines(enable):
-        fail(errors, "qidi1: automatic Box insertion enable macro must persist its opt-in")
+        fail(errors, f"{profile_dir.name}: automatic Box insertion enable macro must persist its opt-in")
     if "SAVE_VARIABLE VARIABLE=qidi_box_auto_insert VALUE=0" not in macro_lines(disable):
-        fail(errors, "qidi1: automatic Box insertion disable macro must persist its opt-out")
+        fail(errors, f"{profile_dir.name}: automatic Box insertion disable macro must persist its opt-out")
 
 
 def validate_profile(profile_dir: Path, errors: list[str]) -> None:
@@ -265,8 +264,8 @@ def validate_profile(profile_dir: Path, errors: list[str]) -> None:
             f"unlisted={sorted(actual - managed)}",
         )
 
-    if profile_dir.name == "qidi2" and any("/" in relative for relative in managed):
-        fail(errors, "qidi2: runtime .cfg files must remain flat for --profile-dir rendering")
+    if profile_dir.name == MAINLINE_PROFILE and any("/" in relative for relative in managed):
+        fail(errors, f"{profile_dir.name}: runtime .cfg files must remain flat for --profile-dir rendering")
 
     combined = "\n".join(
         (profile_dir / relative).read_text(encoding="utf-8") for relative in sorted(actual)
@@ -302,10 +301,10 @@ def validate_profile(profile_dir: Path, errors: list[str]) -> None:
         fail(errors, f"{profile_dir.name}: klippee-macros.cfg lost its generated-file marker")
 
     validate_includes(profile_dir, actual, errors)
-    if profile_dir.name == "qidi1":
-        validate_qidi1_macro_safety(profile_dir, errors)
-        validate_qidi1_plr_contract(profile_dir, errors)
-        validate_qidi1_box_safety(profile_dir, errors)
+    if profile_dir.name == QIDI_FIRMWARE_PROFILE:
+        validate_qidi_firmware_macro_safety(profile_dir, errors)
+        validate_qidi_firmware_plr_contract(profile_dir, errors)
+        validate_qidi_firmware_box_safety(profile_dir, errors)
 
 
 def validate_repository_state(errors: list[str]) -> None:
@@ -332,8 +331,9 @@ def main() -> int:
         return 1
 
     profiles = sorted(path for path in PRINTERS_ROOT.iterdir() if path.is_dir())
-    if {path.name for path in profiles} != {"qidi1", "qidi2"}:
-        fail(errors, f"expected only qidi1 and qidi2 profiles, found {[path.name for path in profiles]}")
+    expected_profiles = {QIDI_FIRMWARE_PROFILE, MAINLINE_PROFILE}
+    if {path.name for path in profiles} != expected_profiles:
+        fail(errors, f"expected profiles {sorted(expected_profiles)}, found {[path.name for path in profiles]}")
     for profile in profiles:
         validate_profile(profile, errors)
     validate_repository_state(errors)
