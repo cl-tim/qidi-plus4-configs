@@ -205,7 +205,6 @@ def validate_qidi_firmware_box_safety(profile_dir: Path, errors: list[str]) -> N
     override_sections = load_cfg_sections(override_path)
     required = {
         "box_output_clock_guard",
-        "gcode_macro reload_all",
         "gcode_macro qidi_box_auto_insert_enable",
         "gcode_macro qidi_box_auto_insert_disable",
     }
@@ -214,19 +213,11 @@ def validate_qidi_firmware_box_safety(profile_dir: Path, errors: list[str]) -> N
         fail(errors, f"{profile_dir.name}: missing Box stability sections {missing}")
         return
 
-    reload_all = override_sections["gcode_macro reload_all"]
-    reload_lines = macro_lines(reload_all)
-    required_fragments = (
-        "rename_existing: _QIDI_RELOAD_ALL",
-        "params.RFID|default(0)|int",
-        "qidi_box_auto_insert|default(0)|int",
-        "_QIDI_RELOAD_ALL {rawparams}",
-    )
-    for fragment in required_fragments:
-        if fragment not in reload_all:
-            fail(errors, f"{profile_dir.name}: RELOAD_ALL safety wrapper is missing {fragment!r}")
-    if not any("automatic and not enabled" in line for line in reload_lines):
-        fail(errors, f"{profile_dir.name}: RELOAD_ALL must default automatic insertion to quarantined")
+    if "gcode_macro reload_all" in override_sections:
+        fail(
+            errors,
+            f"{profile_dir.name}: RELOAD_ALL is registered dynamically and must use the post-load guard, not rename_existing",
+        )
 
     enable = override_sections["gcode_macro qidi_box_auto_insert_enable"]
     disable = override_sections["gcode_macro qidi_box_auto_insert_disable"]
