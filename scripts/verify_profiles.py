@@ -196,10 +196,10 @@ def validate_qidi_firmware_box_safety(profile_dir: Path, errors: list[str]) -> N
         fail(errors, f"{profile_dir.name}: Box motion sensor section is missing")
     else:
         motion_lines = macro_lines(box_sections[motion_section])
-        if not any(re.fullmatch(r"use_irq\s*:\s*false", line, re.IGNORECASE) for line in motion_lines):
-            fail(errors, f"{profile_dir.name}: Box motion sensor must use the bounded polled path")
-        if any(re.match(r"debounce_us\s*:", line, re.IGNORECASE) for line in motion_lines):
-            fail(errors, f"{profile_dir.name}: IRQ-only Box debounce_us must not remain configured")
+        if not any(re.fullmatch(r"use_irq\s*:\s*true", line, re.IGNORECASE) for line in motion_lines):
+            fail(errors, f"{profile_dir.name}: Box motion sensor must retain the vendor IRQ path")
+        if not any(re.fullmatch(r"debounce_us\s*:\s*50", line, re.IGNORECASE) for line in motion_lines):
+            fail(errors, f"{profile_dir.name}: vendor IRQ debounce_us must remain 50")
 
     override_path = profile_dir / "box_overrides.cfg"
     override_sections = load_cfg_sections(override_path)
