@@ -45,6 +45,15 @@ filament handling, drying utilities, guarded chamber heat, mute mode and a
 20% print-time circulation floor. The high configured acceleration is a
 machine ceiling, not a general slicer recommendation; see its OrcaSlicer notes.
 
+Both profiles set Z-tilt travel and bed-mesh speed to 300 mm/s. With Beacon,
+the mesh setting also controls scan speed. The QIDI profile retains its
+1000 mm/s² mesh acceleration cap. These changes have offline regression
+coverage; the validation dates above do not claim a new hardware test.
+
+The Box profile also enables the `box_drying` extension supplied by hlab's
+optional `firmware fixes --box-drying` installation. It provides timed drying
+with live filament-limit checks; see the [Box profile instructions](printers/qidi-firmware-1.8.2-beacon-box/README.md).
+
 ## Repository layout
 
 - `printers/`: deployable examples organized by firmware and hardware setup;
@@ -84,3 +93,11 @@ blocks.
 The existing OrcaSlicer snippets remain separated by Box and non-Box usage.
 Enable object labels so `EXCLUDE_OBJECT_DEFINE` is available to adaptive mesh,
 Smart Park and Voron purge macros.
+
+## Acknowledgments
+
+[Plus4-Grease](https://github.com/JarvisAKF/Plus4-Grease) inspired the removal of
+redundant Box runout waits and the persistent USB logging integrated through
+hlab and Klippee diagnostics, along with the faster probing and Box drying work.
+Our [source review](reference/plus4-grease-source-review.md)
+documents the comparison and adoption decisions.

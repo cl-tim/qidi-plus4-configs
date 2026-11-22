@@ -78,6 +78,15 @@ def validate_includes(profile_dir: Path, cfg_files: set[str], errors: list[str])
                 )
 
 
+def validate_probe_speeds(profile_dir: Path, errors: list[str]) -> None:
+    source = profile_dir / ('printer.cfg' if profile_dir.name == QIDI_FIRMWARE_PROFILE else 'hardware.cfg')
+    sections = load_cfg_sections(source)
+    for section in ('z_tilt', 'bed_mesh'):
+        speed = re.search(r'(?m)^\s*speed\s*[:=]\s*([0-9.]+)\s*(?:#.*)?$', sections.get(section, ''))
+        if not speed or float(speed.group(1)) != 300:
+            fail(errors, f'{profile_dir.name}: {section} speed must be 300 mm/s')
+
+
 def load_cfg_sections(path: Path) -> dict[str, str]:
     sections: dict[str, list[str]] = {}
     current: str | None = None
@@ -102,6 +111,10 @@ def macro_lines(body: str) -> list[str]:
 def validate_qidi_firmware_macro_safety(profile_dir: Path, errors: list[str]) -> None:
     path = profile_dir / "gcode_macro.cfg"
     sections = load_cfg_sections(path)
+    start = sections.get("gcode_macro print_start", "")
+    runout = re.search(r"\{% for i in range\(16\) %\}(.*?)\{% endfor %\}", start, re.DOTALL)
+    if not runout or macro_lines(runout.group(1)) != ["SAVE_VARIABLE VARIABLE=runout_{i} VALUE=0"]:
+        fail(errors, f"{profile_dir.name}: PRINT_START must clear all 16 runout flags without per-flag waits")
     required = {
         "gcode_macro _move_to_chute",
         "gcode_macro _move_to_chute_homed",
@@ -301,6 +314,7 @@ def validate_profile(profile_dir: Path, errors: list[str]) -> None:
         fail(errors, f"{profile_dir.name}: klippee-macros.cfg lost its generated-file marker")
 
     validate_includes(profile_dir, actual, errors)
+    validate_probe_speeds(profile_dir, errors)
     if profile_dir.name == QIDI_FIRMWARE_PROFILE:
         validate_qidi_firmware_macro_safety(profile_dir, errors)
         validate_qidi_firmware_plr_contract(profile_dir, errors)

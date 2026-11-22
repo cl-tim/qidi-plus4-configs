@@ -10,6 +10,11 @@ This directory is a sanitized, deployable example validated on a commissioned
 machine on 2026-08-03. It does not track that printer's identity or Klippee
 history. `profile.json` records the exact ten-file runtime manifest.
 
+Z-tilt travel and Beacon mesh scans now use 300 mm/s. Geometry and probing
+settings are preserved. This tuning has offline regression coverage and still
+needs repeatability and mesh-quality checks on the target machine; the
+validation date above predates this speed change.
+
 It contains:
 
 - `hardware.cfg`: MCU, pin, heater, fan, sensor, motion and bed geometry;

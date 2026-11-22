@@ -26,6 +26,9 @@ The current operational changes include:
 - guarded chute, cutter, pause and Box load/unload routes;
 - a 20% chamber-circulation/carbon-filter floor while printing;
 - QIDI Box startup purge compatibility plus validated cold-unload helpers;
+- sixteen synchronous runout-flag saves without the redundant per-flag waits;
+- 300 mm/s tilt travel and Beacon mesh scans, retaining the 1000 mm/s² mesh acceleration cap;
+- timed Box drying with independent deadlines and live filament-limit checks;
 - KAMP line purge, a 5 mm adaptive-mesh margin and brim-safe Voron purge; and
 - manual-tramming preconditions, abort handling and current restoration.
 
@@ -51,4 +54,48 @@ Run the repository guard before publishing a refresh:
 
 ```powershell
 python scripts/verify_profiles.py
+python -m unittest discover -s scripts -p test_verify_profiles.py
 ```
+
+Persistent USB logging is a host service installed separately through hlab's
+`printer firmware fixes --usb-event-log` option. It is not a Klipper config
+include and adds no files to this profile's manifest. Klippee diagnostics
+collects its bounded retained logs. `--trim-runout-waits` applies the same narrow
+startup optimization to an existing recognized QIDI configuration. These new
+changes have offline regression coverage; the profile's validation date above
+does not claim a new supervised printer test.
+
+## Box drying
+
+Before applying this profile, install the matching `box_drying.py` Klipper
+extension through hlab. The profile's `[box_drying]` section requires it:
+
+```powershell
+hlab printer firmware fixes --target printer.local --fast-probing --box-drying --check
+hlab printer firmware fixes --target printer.local --fast-probing --box-drying -y
+```
+
+From the printer console, while idle:
+
+```gcode
+KLIPPEE_BOX_DRY BOX=1 TEMP=45 HOURS=4 HUMIDITY=20
+KLIPPEE_BOX_DRY_STOP BOX=1
+```
+
+Omit `TEMP` to use the lowest supported limit among loaded filaments, capped
+at 65 C even for an empty Box. Limits come from the printer's own QIDI
+`officiall_filas_list.cfg`; unknown or zero-limit materials, including QIDI's
+PLA entries, refuse heating. The controller rechecks loaded slots and limits
+at most every two seconds, including while humidity control has paused heat.
+It stops if a new filament cannot tolerate the requested temperature.
+
+Each Box has its own monotonic deadline. Positive fractional hours remain timed;
+`HOURS=0` explicitly runs until stopped. Humidity control pauses at the target
+and resumes five percentage points above it. Invalid humidity stops the cycle.
+Printing, shutdown/restart and `TURN_OFF_HEATERS` cancel managed cycles.
+If another controller changes a heater target, drying relinquishes that heater.
+Use `KLIPPEE_BOX_DRY_STOP` to cancel the managed cycle, including a humidity pause;
+writing a target already at zero cannot signal an external ownership change.
+
+Runtime state is not persisted or restored after restart. Installation and
+offline tests do not heat a Box; supervised hardware acceptance remains pending.
